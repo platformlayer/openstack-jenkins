@@ -100,7 +100,7 @@ public class S3Profile {
             throw new IOException(filePath + " is a directory");
         }
         else {
-            File file = new File(filePath.getRemote());
+            File file = new File(filePath.getName());
             S3Bucket bucket;
             try {
                 bucket = getOrCreateBucket(bucketName);
@@ -110,7 +110,8 @@ public class S3Profile {
 
             try {
                 S3Object fileObject =
-                    new S3Object(bucket, file);
+                    new S3Object(bucket, file.getName());
+                fileObject.setDataInputStream(filePath.read());
                 this.s3.putObject(bucket, fileObject);
             } catch (Exception e) {
                 throw new IOException("put " + file + ": " + e);
