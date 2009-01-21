@@ -1,0 +1,6 @@
+<!--
+  This view is used to render the plugin list page.
+-->
+<div>
+  This is a plugin to upload files to Amazon S3 buckets.
+</div>
