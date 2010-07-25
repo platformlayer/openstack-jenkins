@@ -109,12 +109,11 @@ public class S3Profile {
             }
 
             try {
-                S3Object fileObject =
-                    new S3Object(bucket, file.getName());
+                S3Object fileObject = new S3Object(bucket, file.getName());
                 fileObject.setDataInputStream(filePath.read());
                 this.s3.putObject(bucket, fileObject);
             } catch (Exception e) {
-                throw new IOException("put " + file + ": " + e);
+                throw new IOException("put " + file + ": " + e, e);
             }
         }
     }
