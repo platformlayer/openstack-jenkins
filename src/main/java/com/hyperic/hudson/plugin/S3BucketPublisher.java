@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.sf.json.JSONObject;
+
 import org.apache.commons.lang.StringUtils;
 import org.jets3t.service.S3ServiceException;
 import org.kohsuke.stapler.StaplerRequest;
@@ -30,8 +32,8 @@ import org.kohsuke.stapler.StaplerRequest;
 public final class S3BucketPublisher extends Notifier {
 
     private String profileName;
-    public static final Logger LOGGER =
-        Logger.getLogger(S3BucketPublisher.class.getName());
+    
+    public static final Logger LOGGER = Logger.getLogger(S3BucketPublisher.class.getName());
 
     private final List<Entry> entries = new ArrayList<Entry>();
 
@@ -49,10 +51,6 @@ public final class S3BucketPublisher extends Notifier {
     }
 
     
-    public BuildStepMonitor getRequiredMonitorService() {
-		return BuildStepMonitor.BUILD;
-	}
-
 	public List<Entry> getEntries() {
         return entries;
     }
@@ -70,6 +68,12 @@ public final class S3BucketPublisher extends Notifier {
         return null;
     }
 
+    public BuildStepMonitor getRequiredMonitorService() {
+		return BuildStepMonitor.BUILD;
+	}
+
+
+    @Override
     public boolean perform(AbstractBuild<?, ?> build,
                            Launcher launcher,
                            BuildListener listener)
@@ -158,11 +162,18 @@ public final class S3BucketPublisher extends Notifier {
             return "[S3] ";
         }
 
+        @Override
         public String getHelpFile() {
             return "/plugin/s3/help.html";
         }
+        
+        @Override
+		public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+			return true;
+		}
 
-        public Publisher newInstance(StaplerRequest req) {
+        @Override
+        public Publisher newInstance(StaplerRequest req, JSONObject formData) {
             S3BucketPublisher pub = new S3BucketPublisher();
             req.bindParameters(pub, "s3.");
             pub.getEntries().addAll(req.bindParametersToList(Entry.class, "s3.entry."));
@@ -173,7 +184,8 @@ public final class S3BucketPublisher extends Notifier {
             return profiles.toArray(new S3Profile[0]);
         }
 
-        public boolean configure(StaplerRequest req) {
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject formData) {
             profiles.replaceBy(req.bindParametersToList(S3Profile.class, "s3."));
             save();
             return true;
@@ -182,28 +194,26 @@ public final class S3BucketPublisher extends Notifier {
         
     	public FormValidation doLoginCheck(final StaplerRequest request) {
     		final String name = Util.fixEmpty(request.getParameter("name"));
-			if (name == null)  // name is not entered yet
+			if (name == null) { // name is not entered yet
 				return FormValidation.ok();
+			}
 			
 			S3Profile profile = new S3Profile(name, request.getParameter("accessKey"), request.getParameter("secretKey"));
 			
-				try {
-                    profile.login();
-                    profile.check();
-                    profile.logout();
-                } catch (S3ServiceException e) {
-                    LOGGER.log(Level.SEVERE, e.getMessage());
-                    return FormValidation.error("Can't connect to S3 service: " + e.getS3ErrorMessage());
-                }
+			try {
+                profile.login();
+                profile.check();
+                profile.logout();
+            } catch (S3ServiceException e) {
+                LOGGER.log(Level.SEVERE, e.getMessage());
+                return FormValidation.error("Can't connect to S3 service: " + e.getS3ErrorMessage());
+            }
             
 			return FormValidation.ok();
 		}
         
         
-		@Override
-		public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-			return true;
-		}
+		
     }
 
     public String getProfileName() {
