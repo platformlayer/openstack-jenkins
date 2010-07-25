@@ -1,5 +1,6 @@
 package com.hyperic.hudson.plugin;
 
+import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
@@ -127,10 +128,12 @@ public final class S3BucketPublisher extends Notifier {
         return true;
     }
 
+    @Override
     public BuildStepDescriptor<Publisher> getDescriptor() {
         return DESCRIPTOR;
     }
 
+    @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
         
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
