@@ -4,12 +4,15 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Descriptor;
 import hudson.model.Result;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.CopyOnWriteList;
-import hudson.util.FormFieldValidator;
+import hudson.util.FormValidation;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -19,14 +22,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
-
 import org.apache.commons.lang.StringUtils;
 import org.jets3t.service.S3ServiceException;
 import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
-public final class S3BucketPublisher extends Publisher {
+public final class S3BucketPublisher extends Notifier {
 
     private String profileName;
     public static final Logger LOGGER =
@@ -47,7 +47,12 @@ public final class S3BucketPublisher extends Publisher {
         this.profileName = profileName;
     }
 
-    public List<Entry> getEntries() {
+    
+    public BuildStepMonitor getRequiredMonitorService() {
+		return BuildStepMonitor.BUILD;
+	}
+
+	public List<Entry> getEntries() {
         return entries;
     }
         
@@ -88,11 +93,13 @@ public final class S3BucketPublisher extends Publisher {
         }
 
         try {
-            Map<String, String> envVars = build.getEnvVars();
+            Map<String, String> envVars = build.getEnvironment(listener);
 
+            log(listener.getLogger(), "Entries: "+entries);
+            
             for (Entry entry : entries) {
                 String expanded = Util.replaceMacro(entry.sourceFile, envVars);
-                FilePath ws = build.getProject().getWorkspace();
+                FilePath ws = build.getWorkspace();
                 FilePath[] paths = ws.list(expanded);
 
                 if (paths.length == 0) {
@@ -120,13 +127,13 @@ public final class S3BucketPublisher extends Publisher {
         return true;
     }
 
-    public Descriptor<Publisher> getDescriptor() {
+    public BuildStepDescriptor<Publisher> getDescriptor() {
         return DESCRIPTOR;
     }
 
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
         
-    public static final class DescriptorImpl extends Descriptor<Publisher> {
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
                 
         public DescriptorImpl() {
             super(S3BucketPublisher.class);
@@ -155,8 +162,7 @@ public final class S3BucketPublisher extends Publisher {
         public Publisher newInstance(StaplerRequest req) {
             S3BucketPublisher pub = new S3BucketPublisher();
             req.bindParameters(pub, "s3.");
-            pub.getEntries().addAll(
-            req.bindParametersToList(Entry.class, "s3.entry."));
+            pub.getEntries().addAll(req.bindParametersToList(Entry.class, "s3.entry."));
             return pub;
         }
                 
@@ -170,39 +176,31 @@ public final class S3BucketPublisher extends Publisher {
             return true;
         }
                 
-        public void doLoginCheck(final StaplerRequest req, StaplerResponse rsp)
-            throws IOException, ServletException {
-            new FormFieldValidator(req, rsp, false) {
-                protected void check() throws IOException, ServletException {
-                    String name =
-                        Util.fixEmpty(request.getParameter("name"));
-                    if (name == null) {// name is not entered yet
-                        ok();
-                        return;
-                    }
-                    S3Profile profile =
-                        new S3Profile(name,
-                                      request.getParameter("accessKey"),
-                                      request.getParameter("secretKey"));
-                    try {
-                        try {
-                            profile.login();
-                            profile.check();
-                            profile.logout();
-                        } catch (S3ServiceException e) {
-                            LOGGER.log(Level.SEVERE, e.getMessage());
-                            throw new IOException("Can't connect to S3 service: " +
-                                                  e.getS3ErrorMessage());
-                        }
-                                                
-                        ok();
-                    } catch (IOException e) {
-                        LOGGER.log(Level.SEVERE, e.getMessage());
-                        error(e.getMessage());
-                    }
+        
+    	public FormValidation doLoginCheck(final StaplerRequest request) {
+    		final String name = Util.fixEmpty(request.getParameter("name"));
+			if (name == null)  // name is not entered yet
+				return FormValidation.ok();
+			
+			S3Profile profile = new S3Profile(name, request.getParameter("accessKey"), request.getParameter("secretKey"));
+			
+				try {
+                    profile.login();
+                    profile.check();
+                    profile.logout();
+                } catch (S3ServiceException e) {
+                    LOGGER.log(Level.SEVERE, e.getMessage());
+                    return FormValidation.error("Can't connect to S3 service: " + e.getS3ErrorMessage());
                 }
-            }.process();
-        }
+            
+			return FormValidation.ok();
+		}
+        
+        
+		@Override
+		public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+			return true;
+		}
     }
 
     public String getProfileName() {
