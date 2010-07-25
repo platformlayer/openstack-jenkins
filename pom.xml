@@ -9,7 +9,7 @@
   
   <artifactId>s3</artifactId>
   <packaging>hpi</packaging>
-  <version>0.1.0/version>
+  <version>0.1.0</version>
   <name>Hudson S3 publisher plugin</name>
   <url>http://github.com/d6y/hudson-s3</url>
 
