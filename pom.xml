@@ -9,9 +9,16 @@
   
   <artifactId>s3</artifactId>
   <packaging>hpi</packaging>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.1.0/version>
   <name>Hudson S3 publisher plugin</name>
-  <url>...</url>
+  <url>http://github.com/d6y/hudson-s3</url>
+
+  <developers>
+    <developer> <id>dougm</id> <name>Doug MacEachern</name> </developer>
+    <developer> <id>d6y</id> <name>Richard Dallaway</name> </developer>
+  </developers>
+  
+
   
   <dependencies>
     <dependency>
