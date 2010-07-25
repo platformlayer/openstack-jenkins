@@ -2,6 +2,8 @@
 Install
 =======
 
+Tested with Hudson 1.367
+
 * Upload target/s3.hpi to your instance of Hudson
 * Configure S3 profile: Manage Hudson -> Configure System -> Amazon S3 profiles
 * Project -> Configure -> [x] Publish artifacts to S3 Bucket
