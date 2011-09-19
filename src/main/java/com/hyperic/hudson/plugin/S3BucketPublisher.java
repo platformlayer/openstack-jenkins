@@ -7,10 +7,15 @@ import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.Result;
+import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormFieldValidator;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
+import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -18,13 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.servlet.ServletException;
-
-import org.apache.commons.lang.StringUtils;
-import org.jets3t.service.S3ServiceException;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 public final class S3BucketPublisher extends Publisher {
 
@@ -82,12 +80,6 @@ public final class S3BucketPublisher extends Publisher {
         }
         log(listener.getLogger(), "Using S3 profile: " + profile.getName());
         try {
-            profile.login();
-        } catch (S3ServiceException e) {
-            throw new IOException("Can't connect to S3 service: " + e);
-        }
-
-        try {
             Map<String, String> envVars = build.getEnvVars();
 
             for (Entry entry : entries) {
@@ -111,13 +103,13 @@ public final class S3BucketPublisher extends Publisher {
         } catch (IOException e) {
             e.printStackTrace(listener.error("Failed to upload files"));
             build.setResult(Result.UNSTABLE);
-        } finally {
-            if (profile != null) {
-                profile.logout();
-            }
         }
 
         return true;
+    }
+
+    public BuildStepMonitor getRequiredMonitorService() {
+        return BuildStepMonitor.STEP; //prevent artifact overrides
     }
 
     public Descriptor<Publisher> getDescriptor() {
@@ -186,13 +178,11 @@ public final class S3BucketPublisher extends Publisher {
                                       request.getParameter("secretKey"));
                     try {
                         try {
-                            profile.login();
                             profile.check();
-                            profile.logout();
-                        } catch (S3ServiceException e) {
+                        } catch (Exception e) {
                             LOGGER.log(Level.SEVERE, e.getMessage());
                             throw new IOException("Can't connect to S3 service: " +
-                                                  e.getS3ErrorMessage());
+                                                  e.getMessage());
                         }
                                                 
                         ok();
