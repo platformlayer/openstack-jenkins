@@ -4,10 +4,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
@@ -28,12 +25,14 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class S3BucketPublisher extends Recorder {
+public final class S3BucketPublisher extends Recorder implements Describable<Publisher> {
 
     private String profileName;
+    @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     private final List<Entry> entries = new ArrayList<Entry>();
+
 
     @DataBoundConstructor
     public S3BucketPublisher() {
@@ -69,11 +68,11 @@ public final class S3BucketPublisher extends Recorder {
         return null;
     }
 
-    public String getProfileName() {
+    public String getName() {
         return this.profileName;
     }
 
-    public void setProfileName(String profileName) {
+    public void setName(String profileName) {
         this.profileName = profileName;
     }
 
@@ -131,12 +130,6 @@ public final class S3BucketPublisher extends Recorder {
         return BuildStepMonitor.STEP;
     }
 
-    @Override
-    public BuildStepDescriptor getDescriptor() {
-        return DESCRIPTOR;
-    }
-
-    @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         private final CopyOnWriteList<S3Profile> profiles = new CopyOnWriteList<S3Profile>();
@@ -162,7 +155,7 @@ public final class S3BucketPublisher extends Recorder {
         }
 
         @Override
-        public Publisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
+        public S3BucketPublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
             S3BucketPublisher pub = new S3BucketPublisher();
             req.bindParameters(pub, "s3.");
             pub.getEntries().addAll(req.bindParametersToList(Entry.class, "s3.entry."));
