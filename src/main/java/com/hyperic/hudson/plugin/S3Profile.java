@@ -2,8 +2,8 @@ package com.hyperic.hudson.plugin;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import hudson.FilePath;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,13 +12,12 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 public class S3Profile {
-    String name;
-    String accessKey;
-    String secretKey;
+    private String name;
+    private String accessKey;
+    private String secretKey;
     private AmazonS3Client client;
 
-    public static final Logger LOGGER =
-        Logger.getLogger(S3Profile.class.getName());
+    public static final Logger LOGGER = Logger.getLogger(S3Profile.class.getName());
 
     public S3Profile() {
     }
@@ -30,7 +29,7 @@ public class S3Profile {
         this.secretKey = secretKey;
     }
 
-    public String getAccessKey() {
+    public final String getAccessKey() {
         return accessKey;
     }
 
@@ -38,7 +37,7 @@ public class S3Profile {
         this.accessKey = accessKey;
     }
 
-    public String getSecretKey() {
+    public final String getSecretKey() {
         return secretKey;
     }
 
@@ -46,7 +45,7 @@ public class S3Profile {
         this.secretKey = secretKey;
     }
 
-    public String getName() {
+    public final String getName() {
         return this.name;
     }
 
@@ -55,31 +54,25 @@ public class S3Profile {
     }
 
     public void check() throws Exception {
+        if (client == null) {
+            client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey));
+        }
         client.listBuckets();
     }
 
-    public void upload(String bucketName,
-                       FilePath filePath,
-                       Map<String, String> envVars,
-                       PrintStream logger)
-        throws IOException, InterruptedException {
-
+    public void upload(String bucketName, FilePath filePath) throws IOException, InterruptedException {
         if (filePath.isDirectory()) {
             throw new IOException(filePath + " is a directory");
         }
-        else {
-            File file = new File(filePath.getName());
-            try {
-                client.putObject(bucketName, file.getName(), file);
-            } catch (Exception e) {
-                throw new IOException("put " + file + ": " + e, e);
-            }
+        if (client == null) {
+            client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey));
         }
-    }
+        String[] bucketNameArray = bucketName.split(File.separator, 2);
+        try {
+            client.putObject(bucketNameArray[0], bucketNameArray[1] + File.separator + filePath.getName(), filePath.read(), null);
+        } catch (Exception e) {
+            throw new IOException("put " + filePath.getName() + " to bucket " + bucketNameArray[0] + ": " + e);
+        }
 
-    protected void log(final PrintStream logger, final String message) {
-        final String name =
-            StringUtils.defaultString(S3BucketPublisher.DESCRIPTOR.getShortName());
-        logger.println(name + message);
     }
 }
