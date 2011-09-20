@@ -7,25 +7,23 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class S3Profile {
     private String name;
     private String accessKey;
     private String secretKey;
-    private AmazonS3Client client;
-
-    public static final Logger LOGGER = Logger.getLogger(S3Profile.class.getName());
+    private static final AtomicReference<AmazonS3Client> client = new AtomicReference<AmazonS3Client>(null);
 
     public S3Profile() {
     }
 
     @DataBoundConstructor
     public S3Profile(String name, String accessKey, String secretKey) {
-        client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey));
         this.name = name;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
+        client.set(new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey)));
     }
 
     public final String getAccessKey() {
@@ -52,25 +50,26 @@ public class S3Profile {
         this.name = name;
     }
 
-    public void check() throws Exception {
-        if (client == null) {
-            client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey));
+    public AmazonS3Client getClient() {
+        if (client.get() == null) {
+            client.set(new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey)));
         }
-        client.listBuckets();
+        return client.get();
+    }
+
+    public void check() throws Exception {
+        getClient().listBuckets();
     }
 
     public void upload(String bucketName, FilePath filePath) throws IOException, InterruptedException {
         if (filePath.isDirectory()) {
             throw new IOException(filePath + " is a directory");
         }
-        if (client == null) {
-            client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey));
-        }
         String[] bucketNameArray = bucketName.split(File.separator, 2);
         try {
-            client.putObject(bucketNameArray[0], bucketNameArray[1] + File.separator + filePath.getName(), filePath.read(), null);
+            getClient().putObject(bucketNameArray[0], bucketNameArray[1] + File.separator + filePath.getName(), filePath.read(), null);
         } catch (Exception e) {
-            throw new IOException("put " + filePath.getName() + " to bucket " + bucketNameArray[0] + ": " + e);
+            throw new IOException("put " + bucketNameArray[1] + File.separator + filePath.getName() + " to bucket " + bucketNameArray[0] + ": " + e);
         }
 
     }
