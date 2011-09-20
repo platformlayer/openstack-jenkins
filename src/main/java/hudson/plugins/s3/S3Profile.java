@@ -1,14 +1,12 @@
-package com.hyperic.hudson.plugin;
+package hudson.plugins.s3;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import hudson.FilePath;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Map;
 import java.util.logging.Logger;
 
 public class S3Profile {
@@ -22,6 +20,7 @@ public class S3Profile {
     public S3Profile() {
     }
 
+    @DataBoundConstructor
     public S3Profile(String name, String accessKey, String secretKey) {
         client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey));
         this.name = name;
