@@ -65,11 +65,15 @@ public class S3Profile {
         if (filePath.isDirectory()) {
             throw new IOException(filePath + " is a directory");
         }
-        String[] bucketNameArray = bucketName.split(File.separator, 2);
+        String[] bucketNameArray = bucketName.split("/", 2);
+        String objectPath = filePath.getName();
+        if (bucketNameArray.length > 1) {
+            objectPath = bucketNameArray[1] + "/" + objectPath;
+        }
         try {
-            getClient().putObject(bucketNameArray[0], bucketNameArray[1] + File.separator + filePath.getName(), filePath.read(), null);
+            getClient().putObject(bucketNameArray[0], objectPath, filePath.read(), null);
         } catch (Exception e) {
-            throw new IOException("put " + bucketNameArray[1] + File.separator + filePath.getName() + " to bucket " + bucketNameArray[0] + ": " + e);
+            throw new IOException("put " + objectPath + " to bucket " + bucketNameArray[0] + ": " + e);
         }
 
     }
