@@ -1,13 +1,14 @@
 package hudson.plugins.s3;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3Client;
 import hudson.FilePath;
-import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
 
 public class S3Profile {
     private String name;
@@ -60,21 +61,23 @@ public class S3Profile {
     public void check() throws Exception {
         getClient().listBuckets();
     }
-
+    
+    
+   
     public void upload(String bucketName, FilePath filePath) throws IOException, InterruptedException {
         if (filePath.isDirectory()) {
             throw new IOException(filePath + " is a directory");
         }
-        String[] bucketNameArray = bucketName.split("/", 2);
-        String objectPath = filePath.getName();
-        if (bucketNameArray.length > 1) {
-            objectPath = bucketNameArray[1] + "/" + objectPath;
-        }
+        
+        final Destination dest = new Destination(bucketName,filePath.getName());
+        
         try {
-            getClient().putObject(bucketNameArray[0], objectPath, filePath.read(), null);
+            getClient().putObject(dest.bucketName, dest.objectName, filePath.read(), /*metadata=*/null);
         } catch (Exception e) {
-            throw new IOException("put " + objectPath + " to bucket " + bucketNameArray[0] + ": " + e);
+            throw new IOException("put " + dest + ": " + e);
         }
-
     }
+    
+ 
+    
 }
