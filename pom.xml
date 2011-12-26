@@ -11,12 +11,20 @@
     <packaging>hpi</packaging>
     <version>0.2.0-SNAPSHOT</version>
     <name>Hudson S3 publisher plugin</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/S3+Plugin</url>
 
-  <developers>
-    <developer> <id>dougm</id> <name>Doug MacEachern</name> </developer>
-    <developer> <id>d6y</id> <name>Richard Dallaway</name> </developer>
-    <developer> <id>longlho</id> <name>Long Ho</name> </developer>
-  </developers>
+    <developers>
+        <developer> <id>dougm</id> <name>Doug MacEachern</name> </developer>
+        <developer> <id>d6y</id> <name>Richard Dallaway</name> </developer>
+        <developer> <id>longlho</id> <name>Long Ho</name> </developer>
+        <developer> <id>mikewatt</id> <name>Michael Watt</name> </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/s3-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/s3-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/s3-plugin</url>
+    </scm>
 
     <dependencies>
         <dependency>
@@ -24,9 +32,6 @@
             <artifactId>aws-java-sdk</artifactId>
             <version>1.2.1</version>
         </dependency>
-
-
     </dependencies>
-
 
 </project>
