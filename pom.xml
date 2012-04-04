@@ -3,20 +3,24 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.434</version>
+        <version>1.458</version>
     </parent>
 
-    <artifactId>s3</artifactId>
+    <artifactId>openstack</artifactId>
     <packaging>hpi</packaging>
     <version>0.3.0-SNAPSHOT</version>
-    <name>Hudson S3 publisher plugin</name>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/S3+Plugin</url>
+    <name>Jenkins OpenStack publisher plugin</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/OpenStack+Plugin</url>
 
     <developers>
+        <developer> <id>justinsb</id> <name>Justin Santa Barbara</name> </developer>
+        <!-- 
+        Is this credit or blame?  Should we include the S3 developers?
         <developer> <id>dougm</id> <name>Doug MacEachern</name> </developer>
         <developer> <id>d6y</id> <name>Richard Dallaway</name> </developer>
         <developer> <id>longlho</id> <name>Long Ho</name> </developer>
         <developer> <id>mikewatt</id> <name>Michael Watt</name> </developer>
+        -->
     </developers>
 
     <scm>
@@ -27,10 +31,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk</artifactId>
-            <version>1.2.1</version>
-        </dependency>
+			<groupId>org.platformlayer</groupId>
+			<artifactId>openstack-api</artifactId>
+			<version>0.1-SNAPSHOT</version>
+		</dependency>
     </dependencies>
 
 </project>
