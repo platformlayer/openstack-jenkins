@@ -11,7 +11,7 @@ Building
 ========
 
 * From a standalone tree
-  * While in the `hudson-openstack` directory, with no parent Hudson source, `mvn` might work
+  * While in the `openstack-jenkins` directory, with no parent Hudson source, `mvn` might work
   * Note: you may have to move `dotm2_settings.xml` to `~/.m2/settings.xml`
 
 Notes
