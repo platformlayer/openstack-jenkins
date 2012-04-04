@@ -1,4 +1,4 @@
-package hudson.plugins.s3;
+package hudson.plugins.openstack;
 
 import hudson.FilePath;
 

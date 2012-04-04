@@ -1,6 +1,7 @@
-package hudson.plugins.s3;
+package hudson.plugins.openstack;
 
 import static org.junit.Assert.assertEquals;
+import hudson.plugins.openstack.Destination;
 
 import org.junit.Test;
 
