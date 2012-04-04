@@ -7,13 +7,25 @@
           <f:entry title="Profile name" help="/plugin/openstack/help-profile.html">
             <f:textbox name="openstack.name" value="${profile.name}"/>
           </f:entry>
-          <f:entry title="Access key" help="/plugin/openstack/help-accesskey.html">
+          <f:entry title="Authentication URL" help="/plugin/openstack/help-authurl.html">
+            <input class="setting-input" name="openstack.authUrl"
+                   value="${profile.authUrl}"
+                   onchange="Form.findMatchingInput(this,'openstack.accessKey').onchange()"
+             />
+          </f:entry>
+          <f:entry title="Tenant" help="/plugin/openstack/help-tenant.html">
+            <input class="setting-input" name="openstack.tenant"
+                   value="${profile.tenant}"
+                   onchange="Form.findMatchingInput(this,'openstack.accessKey').onchange()"
+             />
+          </f:entry>
+          <f:entry title="Username" help="/plugin/openstack/help-accesskey.html">
             <f:textbox name="openstack.accessKey" value="${profile.accessKey}"
                        checkMethod="post"
-                       checkUrl="'${rootURL}/publisher/OpenstackBucketPublisher/loginCheck?name='+escape(Form.findMatchingInput(this,'openstack.name').value)+'&amp;secretKey='+escape(Form.findMatchingInput(this,'openstack.secretKey').value)+'&amp;accessKey='+escape(this.value)"
+                       checkUrl="'${rootURL}/publisher/OpenstackBucketPublisher/loginCheck?name='+escape(Form.findMatchingInput(this,'openstack.name').value)+'&amp;secretKey='+escape(Form.findMatchingInput(this,'openstack.secretKey').value)+'&amp;tenant='+escape(Form.findMatchingInput(this,'openstack.tenant').value)+'&amp;authUrl='+escape(Form.findMatchingInput(this,'openstack.authUrl').value)+'&amp;accessKey='+escape(this.value)"
             />
           </f:entry>
-          <f:entry title="Secret key" help="/plugin/openstack/help-secretkey.html">
+          <f:entry title="Password" help="/plugin/openstack/help-secretkey.html">
             <input class="setting-input" name="openstack.secretKey"
                    type="password" value="${profile.secretKey}"
                    onchange="Form.findMatchingInput(this,'openstack.accessKey').onchange()"

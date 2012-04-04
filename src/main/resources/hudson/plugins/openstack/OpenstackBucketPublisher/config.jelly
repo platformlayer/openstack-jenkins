@@ -17,7 +17,7 @@
           <input class="setting-input" name="openstack.entry.sourceFile"
             type="text" value="${e.sourceFile}" />
         </f:entry>
-        <f:entry title="Destination bucket" help="${helpURL}/help-destination.html">
+        <f:entry title="Destination container" help="${helpURL}/help-destination.html">
           <input class="setting-input" name="openstack.entry.bucket"
             type="text" value="${e.bucket}" />
         </f:entry>

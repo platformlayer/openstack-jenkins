@@ -16,12 +16,15 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
+import com.google.common.collect.Sets;
+
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -101,6 +104,8 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
         try {
             Map<String, String> envVars = build.getEnvironment(listener);
 
+            Set<String> knownExistsBuckets = Sets.newHashSet();
+            
             for (Entry entry : entries) {
                 String expanded = Util.replaceMacro(entry.sourceFile, envVars);
                 FilePath ws = build.getWorkspace();
@@ -115,7 +120,13 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
                 }
                 String bucket = Util.replaceMacro(entry.bucket, envVars);
                 for (FilePath src : paths) {
-                    log(listener.getLogger(), "bucket=" + bucket + ", file=" + src.getName());
+                    if (!knownExistsBuckets.contains(bucket)) {
+                    	log(listener.getLogger(), " checking container: " + bucket);
+                        profile.ensureBucket(bucket);
+                        knownExistsBuckets.add(bucket);
+                    }
+
+                    log(listener.getLogger(), " container: " + bucket + ", file: " + src.getName());
                     profile.upload(bucket, src);
                 }
             }
@@ -146,7 +157,7 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
 
         @Override
         public String getDisplayName() {
-            return "Publish artifacts to OpenStack Bucket";
+            return "Publish artifacts to OpenStack Storage";
         }
 
         @Override
@@ -181,12 +192,24 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
                 return FormValidation.ok();
 
             }
-            String authUrl = null; 
-            String tenant = null;
             
-            OpenstackProfile profile = new OpenstackProfile(name, authUrl, tenant, req.getParameter("accessKey"), req.getParameter("secretKey"));
+            String authUrl = Util.fixEmpty(req.getParameter("authUrl"));
+            if (authUrl == null) {// authUrl is not entered yet
+                return FormValidation.ok();
+            }
+            
+            String tenant = Util.fixEmpty(req.getParameter("tenant"));
+            
+            String accessKey = Util.fixEmpty(req.getParameter("accessKey"));
+			String secretKey = Util.fixEmpty(req.getParameter("secretKey"));
+
+			if (accessKey == null || secretKey == null) {
+			    return FormValidation.error("Username / Password required");
+	        }
 
             try {
+                
+				OpenstackProfile profile = new OpenstackProfile(name, authUrl, tenant, accessKey, secretKey);
                 profile.check();
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e.getMessage(), e);
