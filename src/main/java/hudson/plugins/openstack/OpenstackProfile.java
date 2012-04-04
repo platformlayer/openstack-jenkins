@@ -10,7 +10,7 @@ import org.openstack.client.OpenstackCredentials;
 import org.openstack.client.common.OpenstackSession;
 import org.openstack.client.storage.OpenstackStorageClient;
 
-public class S3Profile {
+public class OpenstackProfile {
 	private String name;
     private String authUrl;
     private String tenant;
@@ -18,11 +18,11 @@ public class S3Profile {
     private String secretKey;
     private AtomicReference<OpenstackSession> session = new AtomicReference<OpenstackSession>(null);
 
-    public S3Profile() {
+    public OpenstackProfile() {
     }
 
     @DataBoundConstructor
-    public S3Profile(String name, String authUrl, String tenant, String accessKey, String secretKey) {
+    public OpenstackProfile(String name, String authUrl, String tenant, String accessKey, String secretKey) {
         this.name = name;
         this.authUrl = authUrl;
         this.tenant = tenant;

@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class S3BucketPublisher extends Recorder implements Describable<Publisher> {
+public final class OpenstackBucketPublisher extends Recorder implements Describable<Publisher> {
 
     private String profileName;
     @Extension
@@ -35,15 +35,15 @@ public final class S3BucketPublisher extends Recorder implements Describable<Pub
 
 
     @DataBoundConstructor
-    public S3BucketPublisher() {
+    public OpenstackBucketPublisher() {
         super();
     }
 
-    public S3BucketPublisher(String profileName) {
+    public OpenstackBucketPublisher(String profileName) {
         super();
         if (profileName == null) {
             // defaults to the first one
-            S3Profile[] sites = DESCRIPTOR.getProfiles();
+            OpenstackProfile[] sites = DESCRIPTOR.getProfiles();
             if (sites.length > 0)
                 profileName = sites[0].getName();
         }
@@ -54,14 +54,14 @@ public final class S3BucketPublisher extends Recorder implements Describable<Pub
         return entries;
     }
 
-    public S3Profile getProfile() {
-        S3Profile[] profiles = DESCRIPTOR.getProfiles();
+    public OpenstackProfile getProfile() {
+        OpenstackProfile[] profiles = DESCRIPTOR.getProfiles();
 
         if (profileName == null && profiles.length > 0)
             // default
             return profiles[0];
 
-        for (S3Profile profile : profiles) {
+        for (OpenstackProfile profile : profiles) {
             if (profile.getName().equals(profileName))
                 return profile;
         }
@@ -91,13 +91,13 @@ public final class S3BucketPublisher extends Recorder implements Describable<Pub
             return true;
         }
 
-        S3Profile profile = getProfile();
+        OpenstackProfile profile = getProfile();
         if (profile == null) {
-            log(listener.getLogger(), "No S3 profile is configured.");
+            log(listener.getLogger(), "No OpenStack profile is configured.");
             build.setResult(Result.UNSTABLE);
             return true;
         }
-        log(listener.getLogger(), "Using S3 profile: " + profile.getName());
+        log(listener.getLogger(), "Using OpenStack profile: " + profile.getName());
         try {
             Map<String, String> envVars = build.getEnvironment(listener);
 
@@ -132,7 +132,7 @@ public final class S3BucketPublisher extends Recorder implements Describable<Pub
 
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
-        private final CopyOnWriteList<S3Profile> profiles = new CopyOnWriteList<S3Profile>();
+        private final CopyOnWriteList<OpenstackProfile> profiles = new CopyOnWriteList<OpenstackProfile>();
         private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
 
         public DescriptorImpl(Class<? extends Publisher> clazz) {
@@ -141,38 +141,38 @@ public final class S3BucketPublisher extends Recorder implements Describable<Pub
         }
 
         public DescriptorImpl() {
-            this(S3BucketPublisher.class);
+            this(OpenstackBucketPublisher.class);
         }
 
         @Override
         public String getDisplayName() {
-            return "Publish artifacts to S3 Bucket";
+            return "Publish artifacts to OpenStack Bucket";
         }
 
         @Override
         public String getHelpFile() {
-            return "/plugin/s3/help.html";
+            return "/plugin/openstack/help.html";
         }
 
         @Override
-        public S3BucketPublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
-            S3BucketPublisher pub = new S3BucketPublisher();
-            req.bindParameters(pub, "s3.");
-            pub.getEntries().addAll(req.bindParametersToList(Entry.class, "s3.entry."));
+        public OpenstackBucketPublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
+            OpenstackBucketPublisher pub = new OpenstackBucketPublisher();
+            req.bindParameters(pub, "openstack.");
+            pub.getEntries().addAll(req.bindParametersToList(Entry.class, "openstack.entry."));
             return pub;
         }
 
         @Override
         public boolean configure(StaplerRequest req, net.sf.json.JSONObject json) throws FormException {
-            profiles.replaceBy(req.bindParametersToList(S3Profile.class, "s3."));
+            profiles.replaceBy(req.bindParametersToList(OpenstackProfile.class, "openstack."));
             save();
             return true;
         }
 
 
 
-        public S3Profile[] getProfiles() {
-            return profiles.toArray(new S3Profile[0]);
+        public OpenstackProfile[] getProfiles() {
+            return profiles.toArray(new OpenstackProfile[0]);
         }
 
         public FormValidation doLoginCheck(final StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
@@ -184,13 +184,13 @@ public final class S3BucketPublisher extends Recorder implements Describable<Pub
             String authUrl = null; 
             String tenant = null;
             
-            S3Profile profile = new S3Profile(name, authUrl, tenant, req.getParameter("accessKey"), req.getParameter("secretKey"));
+            OpenstackProfile profile = new OpenstackProfile(name, authUrl, tenant, req.getParameter("accessKey"), req.getParameter("secretKey"));
 
             try {
                 profile.check();
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e.getMessage(), e);
-                return FormValidation.error("Can't connect to S3 service: " + e.getMessage());
+                return FormValidation.error("Can't connect to OpenStack service: " + e.getMessage());
             }
             return FormValidation.ok();
         }
