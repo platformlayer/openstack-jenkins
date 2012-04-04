@@ -25,9 +25,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/s3-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/s3-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/s3-plugin</url>
+        <connection>scm:git:ssh://github.com/jenkinsci/openstack-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/openstack-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/openstack-plugin</url>
     </scm>
 
     <dependencies>
