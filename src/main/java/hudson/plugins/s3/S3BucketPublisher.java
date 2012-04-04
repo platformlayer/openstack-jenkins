@@ -181,7 +181,10 @@ public final class S3BucketPublisher extends Recorder implements Describable<Pub
                 return FormValidation.ok();
 
             }
-            S3Profile profile = new S3Profile(name, req.getParameter("accessKey"), req.getParameter("secretKey"));
+            String authUrl = null; 
+            String tenant = null;
+            
+            S3Profile profile = new S3Profile(name, authUrl, tenant, req.getParameter("accessKey"), req.getParameter("secretKey"));
 
             try {
                 profile.check();

@@ -6,25 +6,37 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3Client;
+import org.openstack.client.OpenstackCredentials;
+import org.openstack.client.common.OpenstackSession;
+import org.openstack.client.storage.OpenstackStorageClient;
 
 public class S3Profile {
-    private String name;
+	private String name;
+    private String authUrl;
+    private String tenant;
     private String accessKey;
     private String secretKey;
-    private static final AtomicReference<AmazonS3Client> client = new AtomicReference<AmazonS3Client>(null);
+    private AtomicReference<OpenstackSession> session = new AtomicReference<OpenstackSession>(null);
 
     public S3Profile() {
     }
 
     @DataBoundConstructor
-    public S3Profile(String name, String accessKey, String secretKey) {
+    public S3Profile(String name, String authUrl, String tenant, String accessKey, String secretKey) {
         this.name = name;
+        this.authUrl = authUrl;
+        this.tenant = tenant;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
-        client.set(new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey)));
+
+        OpenstackSession session = OpenstackSession.create();
+        OpenstackCredentials credentials = buildCredentials();
+        session.authenticate(credentials);
+        this.session.set(session);
+    }
+
+    private OpenstackCredentials buildCredentials() {
+        return new OpenstackCredentials(authUrl, accessKey, secretKey, tenant);
     }
 
     public final String getAccessKey() {
@@ -51,17 +63,25 @@ public class S3Profile {
         this.name = name;
     }
 
-    public AmazonS3Client getClient() {
-        if (client.get() == null) {
-            client.set(new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey)));
+    public OpenstackSession getSession() {
+        if (session.get() == null) {
+            OpenstackSession session = OpenstackSession.create();
+            OpenstackCredentials credentials = buildCredentials();
+            session.authenticate(credentials);
+            this.session.set(session);
         }
-        return client.get();
+        return session.get();
+    }
+
+    public OpenstackStorageClient getStorageClient() {
+        OpenstackSession session = getSession();
+        return session.getStorageClient();
     }
 
     public void check() throws Exception {
-        getClient().listBuckets();
+        getStorageClient().root().show();
     }
-    
+
     
    
     public void upload(String bucketName, FilePath filePath) throws IOException, InterruptedException {
@@ -72,7 +92,7 @@ public class S3Profile {
         final Destination dest = new Destination(bucketName,filePath.getName());
         
         try {
-            getClient().putObject(dest.bucketName, dest.objectName, filePath.read(), /*metadata=*/null);
+        	getStorageClient().putObject(dest.bucketName, dest.objectName, filePath.read(), filePath.length());
         } catch (Exception e) {
             throw new IOException("put " + dest + ": " + e);
         }
