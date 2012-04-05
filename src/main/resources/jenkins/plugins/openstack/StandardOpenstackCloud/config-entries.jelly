@@ -1,0 +1,35 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:entry title="${%Cloud ID}" field="id">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="${%Openstack URL}" field="authUrl">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="${%Access ID}" field="accessId">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="${%Tenant}" field="tenant">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="${%Secret Key}" field="secretKey">
+    <f:password />
+  </f:entry>
+  <f:description>The regions will be populated once the keys above are entered.
+  </f:description>
+  <f:entry title="${%Region}" field="region">
+    <f:select/>
+  </f:entry>
+  <f:entry title="${%SSH Key Pair's Public Key}" field="sshPublicKey">
+    <f:textarea />
+  </f:entry>
+  <f:entry title="${%SSH Key Pair's Private Key}" field="sshPrivateKey">
+    <f:textarea />
+  </f:entry>
+  <f:advanced>
+    <f:entry title="${%Instance Cap}" field="instanceCapStr">
+      <f:textbox />
+    </f:entry>
+  </f:advanced>
+  <f:validateButton title="${%Generate Key}" progress="${%Generate...}" method="generateKey" with="id,authUrl,accessId,tenant,secretKey,region" />
+  <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="id,authUrl,accessId,tenant,secretKey,region,sshPrivateKey" />
+</j:jelly>

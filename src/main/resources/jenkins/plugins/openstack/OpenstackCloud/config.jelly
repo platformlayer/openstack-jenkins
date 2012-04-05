@@ -1,0 +1,9 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <st:include class="${descriptor.clazz}" page="config-entries.jelly" />
+
+  <f:entry title="${%Images}" description="${%List of images to be launched as slaves}">
+    <f:repeatable field="templates">
+      <st:include page="config.jelly" class="${descriptor.clazz}" />
+    </f:repeatable>
+  </f:entry>
+</j:jelly>
