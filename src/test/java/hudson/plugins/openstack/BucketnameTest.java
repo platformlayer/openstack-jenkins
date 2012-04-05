@@ -1,7 +1,7 @@
 package hudson.plugins.openstack;
 
 import static org.junit.Assert.assertEquals;
-import hudson.plugins.openstack.Destination;
+import jenkins.plugins.openstack.storage.Destination;
 
 import org.junit.Test;
 

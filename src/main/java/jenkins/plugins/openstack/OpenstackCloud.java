@@ -3,7 +3,6 @@ package jenkins.plugins.openstack;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
-import hudson.model.Hudson.CloudList;
 import hudson.model.Label;
 import hudson.model.Node;
 import jenkins.plugins.openstack.Messages;
@@ -35,12 +34,10 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
-import org.openstack.client.CloudCapabilities;
 import org.openstack.client.InstanceState;
 import org.openstack.client.OpenstackAuthenticationException;
 import org.openstack.client.OpenstackCredentials;
 import org.openstack.client.OpenstackException;
-import org.openstack.client.common.OpenstackComputeClient;
 import org.openstack.client.common.OpenstackSession;
 import org.openstack.model.compute.Flavor;
 import org.openstack.model.compute.KeyPair;
@@ -49,13 +46,11 @@ import org.openstack.model.identity.Service;
 import org.openstack.model.identity.ServiceEndpoint;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 
-
 /**
- * Hudson's view of EC2. 
+ * Hudson's view of OpenStack. 
  *
  * @author Kohsuke Kawaguchi
  */
@@ -304,6 +299,8 @@ public abstract class OpenstackCloud extends Cloud {
 		for (Cloud cloud : Hudson.getInstance().clouds) {
 			if (cloud instanceof OpenstackCloud) {
 				OpenstackCloud openstackCloud = (OpenstackCloud) cloud;
+				if (cloudId == null) return openstackCloud;
+				
 				String cloudName = openstackCloud.getCloudId();
 				if (cloudId.equals(cloudName)) {
 					return openstackCloud;
@@ -318,7 +315,7 @@ public abstract class OpenstackCloud extends Cloud {
      */
     public synchronized OpenstackSession connect() throws OpenstackException {
         if (session == null) {
-            session= connect(authUrl, accessId, tenant, secretKey);
+            session = connect(authUrl, accessId, tenant, secretKey);
         }
         return session;
     }
@@ -389,7 +386,6 @@ public abstract class OpenstackCloud extends Cloud {
         }
     }
 
-
     public static abstract class DescriptorImpl extends Descriptor<Cloud> {
         public Iterable<Flavor> getInstanceTypes() {
         	// Is this used?
@@ -400,7 +396,6 @@ public abstract class OpenstackCloud extends Cloud {
 
         public FormValidation doCheckAccessId(@QueryParameter String value) throws IOException, ServletException {
             return FormValidation.ok();
-            
 //            return FormValidation.validateBase64(value,false,false,Messages.OpenstackCloud_InvalidAccessId());
         }
 

@@ -2,15 +2,14 @@
 
   <j:set var="helpURL" value="/plugin/openstack" />
     <f:entry title="OpenStack profile">
-      <select class="setting-input" name="openstack.name" description="Select configured OpenStack profile. Check global hudson config for defining access properties for this profile">
+      <select class="setting-input" name="openstack.cloudId" description="Select configured OpenStack cloud. Check global hudson config for defining access properties for this profile">
         <j:forEach var="s" items="${descriptor.profiles}">
-          <f:option selected="${s.name==instance.name}">${s.name}</f:option>
+          <f:option selected="${s.name==instance.cloudId}">${s.name}</f:option>
         </j:forEach>
       </select>
     </f:entry>
 
   <f:entry title="Files to upload">
-		
     <f:repeatable var="e" items="${instance.entries}">
       <table width="100%">
         <f:entry title="Source" help="${helpURL}/help-source.html">

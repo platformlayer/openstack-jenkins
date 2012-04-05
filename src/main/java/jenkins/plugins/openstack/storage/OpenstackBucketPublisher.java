@@ -1,36 +1,37 @@
-package hudson.plugins.openstack;
+package jenkins.plugins.openstack.storage;
 
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.*;
+import hudson.slaves.Cloud;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
-import hudson.util.CopyOnWriteList;
-import hudson.util.FormValidation;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.openstack.client.common.OpenstackSession;
+import org.openstack.client.storage.OpenstackStorageClient;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class OpenstackBucketPublisher extends Recorder implements Describable<Publisher> {
+import jenkins.plugins.openstack.OpenstackCloud;
 
-    private String profileName;
+public final class OpenstackBucketPublisher extends Recorder implements Describable<Publisher> {
+    private String cloudId;
+    
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
@@ -42,41 +43,32 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
         super();
     }
 
-    public OpenstackBucketPublisher(String profileName) {
+    public OpenstackBucketPublisher(String cloudId) {
         super();
-        if (profileName == null) {
+        if (cloudId == null) {
             // defaults to the first one
-            OpenstackProfile[] sites = DESCRIPTOR.getProfiles();
-            if (sites.length > 0)
-                profileName = sites[0].getName();
+            OpenstackCloud cloud = OpenstackCloud.get(null);
+            if (cloud != null) {
+                cloudId = cloud.getCloudId();
+            }
         }
-        this.profileName = profileName;
+        this.cloudId = cloudId;
     }
 
     public List<Entry> getEntries() {
         return entries;
     }
 
-    public OpenstackProfile getProfile() {
-        OpenstackProfile[] profiles = DESCRIPTOR.getProfiles();
-
-        if (profileName == null && profiles.length > 0)
-            // default
-            return profiles[0];
-
-        for (OpenstackProfile profile : profiles) {
-            if (profile.getName().equals(profileName))
-                return profile;
-        }
-        return null;
+    public OpenstackCloud getProfile() {
+        return OpenstackCloud.get(cloudId);
     }
 
-    public String getName() {
-        return this.profileName;
+    public String getCloudId() {
+        return cloudId;
     }
 
-    public void setName(String profileName) {
-        this.profileName = profileName;
+    public void setCloudId(String cloudId) {
+        this.cloudId = cloudId;
     }
 
     protected void log(final PrintStream logger, final String message) {
@@ -94,14 +86,17 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
             return true;
         }
 
-        OpenstackProfile profile = getProfile();
-        if (profile == null) {
-            log(listener.getLogger(), "No OpenStack profile is configured.");
+        OpenstackCloud cloud = getProfile();
+        if (cloud == null) {
+            log(listener.getLogger(), "No OpenStack cloud is configured.");
             build.setResult(Result.UNSTABLE);
             return true;
         }
-        log(listener.getLogger(), "Using OpenStack profile: " + profile.getName());
+        log(listener.getLogger(), "Using OpenStack cloud: " + cloud.getDisplayName());
         try {
+            OpenstackSession session = cloud.connect();
+            OpenstackStorageClient storageClient = session.getStorageClient();
+            
             Map<String, String> envVars = build.getEnvironment(listener);
 
             Set<String> knownExistsBuckets = Sets.newHashSet();
@@ -122,12 +117,12 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
                 for (FilePath src : paths) {
                     if (!knownExistsBuckets.contains(bucket)) {
                     	log(listener.getLogger(), " checking container: " + bucket);
-                        profile.ensureBucket(bucket);
+                    	OpenstackStorage.ensureBucket(storageClient, bucket);
                         knownExistsBuckets.add(bucket);
                     }
 
                     log(listener.getLogger(), " container: " + bucket + ", file: " + src.getName());
-                    profile.upload(bucket, src);
+                    OpenstackStorage.upload(storageClient, bucket, src);
                 }
             }
         } catch (IOException e) {
@@ -143,7 +138,6 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
 
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
-        private final CopyOnWriteList<OpenstackProfile> profiles = new CopyOnWriteList<OpenstackProfile>();
         private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
 
         public DescriptorImpl(Class<? extends Publisher> clazz) {
@@ -160,6 +154,7 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
             return "Publish artifacts to OpenStack Storage";
         }
 
+        // TODO: Move to resources
         @Override
         public String getHelpFile() {
             return "/plugin/openstack/help.html";
@@ -173,49 +168,17 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
             return pub;
         }
 
-        @Override
-        public boolean configure(StaplerRequest req, net.sf.json.JSONObject json) throws FormException {
-            profiles.replaceBy(req.bindParametersToList(OpenstackProfile.class, "openstack."));
-            save();
-            return true;
-        }
+        public OpenstackCloud[] getProfiles() {
+            List<OpenstackCloud> openstackClouds = Lists.newArrayList();
 
-
-
-        public OpenstackProfile[] getProfiles() {
-            return profiles.toArray(new OpenstackProfile[0]);
-        }
-
-        public FormValidation doLoginCheck(final StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
-            String name = Util.fixEmpty(req.getParameter("name"));
-            if (name == null) {// name is not entered yet
-                return FormValidation.ok();
-
+            for (Cloud cloud : Hudson.getInstance().clouds) {
+                if (cloud instanceof OpenstackCloud) {
+                    OpenstackCloud openstackCloud = (OpenstackCloud) cloud;
+                    openstackClouds.add(openstackCloud);
+                }
             }
             
-            String authUrl = Util.fixEmpty(req.getParameter("authUrl"));
-            if (authUrl == null) {// authUrl is not entered yet
-                return FormValidation.ok();
-            }
-            
-            String tenant = Util.fixEmpty(req.getParameter("tenant"));
-            
-            String accessKey = Util.fixEmpty(req.getParameter("accessKey"));
-			String secretKey = Util.fixEmpty(req.getParameter("secretKey"));
-
-			if (accessKey == null || secretKey == null) {
-			    return FormValidation.error("Username / Password required");
-	        }
-
-            try {
-                
-				OpenstackProfile profile = new OpenstackProfile(name, authUrl, tenant, accessKey, secretKey);
-                profile.check();
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, e.getMessage(), e);
-                return FormValidation.error("Can't connect to OpenStack service: " + e.getMessage());
-            }
-            return FormValidation.ok();
+            return openstackClouds.toArray(new OpenstackCloud[0]);
         }
 
         @Override

@@ -1,4 +1,4 @@
-package hudson.plugins.openstack;
+package jenkins.plugins.openstack.storage;
 
 public final class Entry {
     /**
