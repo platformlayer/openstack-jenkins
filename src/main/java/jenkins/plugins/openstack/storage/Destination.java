@@ -15,7 +15,6 @@ public class Destination {
   public final String objectName; 
   
   public Destination(final String userBucketName, final String fileName) {
-    
     if (userBucketName == null || fileName == null) 
       throw new IllegalArgumentException("Not defined for null parameters: "+userBucketName+","+fileName);
     

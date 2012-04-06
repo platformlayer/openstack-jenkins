@@ -45,6 +45,7 @@ public final class OpenstackBucketPublisher extends Recorder implements Describa
 
     public OpenstackBucketPublisher(String cloudId) {
         super();
+        cloudId = Util.fixEmptyAndTrim(cloudId);
         if (cloudId == null) {
             // defaults to the first one
             OpenstackCloud cloud = OpenstackCloud.get(null);

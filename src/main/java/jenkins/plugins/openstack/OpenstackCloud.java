@@ -1,5 +1,6 @@
 package jenkins.plugins.openstack;
 
+import hudson.Util;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
@@ -88,20 +89,15 @@ public abstract class OpenstackCloud extends Cloud {
         return Secret.fromString(s.trim());
     }
 	
-	static String safeTrim(String s) {
-        if (s == null) return null;
-        return s.trim();
-    }
-    
     protected OpenstackCloud(String id, URL authUrl, String accessId, String tenant, String secretKey, String sshPublicKey, String sshPrivateKey, String instanceCapStr, List<SlaveTemplate> templates) {
         super(id);
-        this.id = safeTrim(id);
+        this.id = Util.fixEmptyAndTrim(id);
         this.authUrl = authUrl;
-        this.accessId = safeTrim(accessId);
-        this.tenant = safeTrim(tenant);
+        this.accessId = Util.fixEmptyAndTrim(accessId);
+        this.tenant = Util.fixEmptyAndTrim(tenant);
         this.secretKey = toSecret(secretKey);
         this.sshPrivateKey = toSecret(sshPrivateKey);
-        this.sshPublicKey = safeTrim(sshPublicKey);
+        this.sshPublicKey = Util.fixEmptyAndTrim(sshPublicKey);
         if(instanceCapStr.equals(""))
             this.instanceCap = Integer.MAX_VALUE;
         else
