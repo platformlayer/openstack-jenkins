@@ -1,41 +1,27 @@
-<!-- In order to build, this should go into your ~/.m2/settings.xml file if you don't have it already -->
-<!-- Also be sure to properly export M2_HOME, i.e. `export M2_HOME=/usr/local/apache-maven-2.0.9` -->
-
 <settings>
-	<profiles>
-	   <profile>
-		 <id>hudson</id>
-		 <activation>
-		   <activeByDefault />
-		 </activation>
-		 <pluginRepositories>
-		   <pluginRepository>
-		 <id>java.net2</id>
-		 <url>http://download.java.net/maven/2</url>
-		   </pluginRepository>
-		 </pluginRepositories>
+  <pluginGroups>
+    <pluginGroup>org.jenkins-ci.tools</pluginGroup>
+  </pluginGroups>
 
-		 <repositories>
-			<repository>
-			  <id>java.net2</id>
-			  <url>http://download.java.net/maven/2</url>
-			  <releases>
-			<enabled>true</enabled>
-			<updatePolicy>never</updatePolicy>
-			  </releases>
-			  <snapshots>
-			<enabled>false</enabled>
-			  </snapshots>
-			</repository>
-		  </repositories>
-	   </profile>
-	</profiles>
-
-	<activeProfiles>
-	   <activeProfile>hudson</activeProfile>
-	</activeProfiles>
-
-	<pluginGroups>
-	   <pluginGroup>org.jvnet.hudson.tools</pluginGroup>
-	</pluginGroups>
+  <profiles>
+    <!-- Give access to Jenkins plugins -->
+    <profile>
+      <id>jenkins</id>
+      <activation>
+        <activeByDefault>true</activeByDefault> <!-- change this to false, if you don't like to have it on per default -->
+      </activation>
+      <repositories>
+        <repository>
+          <id>repo.jenkins-ci.org</id>
+          <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>repo.jenkins-ci.org</id>
+          <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
 </settings>
